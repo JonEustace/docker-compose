@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jeustace/react-test -f ./client/Dockerfile.dev
+
+script:
+  - docker run jeustace/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jeustace/multi-client ./client
+  - docker build -t jeustace/multi-nginx ./nginx
+  - docker build -t jeustace/multi-server ./server
+  - docker build -t jeustace/multi-worker ./worker
+  # login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take these images and push to docker hub
+  - docker push jeustace/multi-client
+  - docker push jeustace/multi-nginx
+  - docker push jeustace/multi-server
+  - docker push jeustace/multi-worker
